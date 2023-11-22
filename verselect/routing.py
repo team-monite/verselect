@@ -87,7 +87,6 @@ class RootHeaderAPIRouter(APIRouter):
             return
 
         request_headers = dict(scope["headers"])
-        # breakpoint()
         header_value = request_headers.get(self.api_version_header_name.encode(), b"").decode()
         if header_value:
             header_value = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()

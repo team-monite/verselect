@@ -1,8 +1,8 @@
 import re
-from fastapi import APIRouter
-from fastapi.testclient import TestClient
 
 import pytest
+from fastapi import APIRouter
+from fastapi.testclient import TestClient
 
 from tests._resources.utils import BASIC_HEADERS, DEFAULT_API_VERSION
 from tests._resources.versioned_app.app import (
@@ -25,7 +25,7 @@ def test__header_routing_fastapi_init__routes_were_passed__should_raise_error():
         VerselectAppCreationError,
         match=re.escape(
             "It's prohibited to pass routes to HeaderRoutingFastAPI. "
-            "Please use `add_header_versioned_routers` or `add_unversioned_routers`"
+            "Please use `add_header_versioned_routers` or `add_unversioned_routers`",
         ),
     ):
         HeaderRoutingFastAPI(routes=[1])  # pyright: ignore[reportGeneralTypeIssues]

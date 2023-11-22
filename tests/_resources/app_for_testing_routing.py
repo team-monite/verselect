@@ -1,6 +1,5 @@
-from fastapi import Request, APIRouter
+from fastapi import APIRouter, Request
 from starlette.responses import JSONResponse, Response
-
 
 from verselect import HeaderRoutingFastAPI
 

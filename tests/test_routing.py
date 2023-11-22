@@ -4,8 +4,8 @@ from starlette.responses import PlainTextResponse
 from starlette.routing import Match, NoMatchFound, Route
 from starlette.testclient import TestClient
 
-from verselect.apps import HeaderRoutingFastAPI
 from tests._resources.app_for_testing_routing import mixed_hosts_app
+from verselect.apps import HeaderRoutingFastAPI
 
 
 def test__header_routing():

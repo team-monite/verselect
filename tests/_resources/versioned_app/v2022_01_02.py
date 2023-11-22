@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-
 from fastapi.routing import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/v1")
 

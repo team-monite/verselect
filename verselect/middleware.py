@@ -1,5 +1,5 @@
-from contextvars import ContextVar
 import inspect
+from contextvars import ContextVar
 from datetime import date
 from typing import Annotated, Any, cast
 
@@ -21,8 +21,8 @@ def _get_api_version_dependency(api_version_header_name: str, version_example: s
                 api_version_header_name.replace("-", "_"),
                 inspect.Parameter.KEYWORD_ONLY,
                 annotation=Annotated[date, Header(examples=[version_example])],
-            )
-        ]
+            ),
+        ],
     )
     return wrapped
 
@@ -41,7 +41,7 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         # We use the dependant to apply fastapi's validation to the header, making validation at middleware level
         # consistent with validation and route level.
         self.version_header_validation_dependant = get_dependant(
-            path="", call=_get_api_version_dependency(api_version_header_name, "2000-08-23")
+            path="", call=_get_api_version_dependency(api_version_header_name, "2000-08-23"),
         )
 
     async def dispatch(
@@ -54,7 +54,7 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         api_version: date | None
         if self.api_version_header_name in request.headers:
             solved_result = await solve_dependencies(
-                request=request, dependant=self.version_header_validation_dependant
+                request=request, dependant=self.version_header_validation_dependant,
             )
             values, errors, *_ = solved_result
             if errors:

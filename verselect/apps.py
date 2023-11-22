@@ -2,22 +2,22 @@ from contextvars import ContextVar
 from datetime import date, datetime
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
-from fastapi.dependencies.utils import get_body_field, get_dependant, get_parameterless_sub_dependant
+from fastapi.dependencies.utils import get_dependant, get_parameterless_sub_dependant
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute, APIRouter
 from fastapi.templating import Jinja2Templates
 from starlette.routing import Route
 
 from verselect.routing import VERSION_HEADER_FORMAT
 
-from .middleware import _get_api_version_dependency, HeaderVersioningMiddleware
 from .exceptions import VerselectAppCreationError
-from .routing import APIRouter, RootHeaderAPIRouter
+from .middleware import HeaderVersioningMiddleware, _get_api_version_dependency
+from .routing import RootHeaderAPIRouter
 
 CURR_DIR = Path(__file__).resolve()
 logger = getLogger(__name__)
@@ -71,13 +71,16 @@ class HeaderRoutingFastAPI(FastAPI):
             include_in_schema=False,
         )
         self.add_unversioned_routers(router)
-        middleware: Any = lambda *a, **kw: HeaderVersioningMiddleware(
-            *a,
-            api_version_header_name=self.router.api_version_header_name,
-            api_version_var=self.api_version_var,
-            **kw,
-        )
-        self.add_middleware(middleware)
+
+        def middleware(*a: Any, **kw: Any) -> HeaderVersioningMiddleware:
+            return HeaderVersioningMiddleware(
+                *a,
+                api_version_header_name=self.router.api_version_header_name,
+                api_version_var=self.api_version_var,
+                **kw,
+            )
+
+        self.add_middleware(cast(Any, middleware))
 
     def enrich_swagger(self):
         """
@@ -107,7 +110,7 @@ class HeaderRoutingFastAPI(FastAPI):
                 if not isinstance(route, APIRoute):
                     continue
                 route.dependencies.append(
-                    Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value))
+                    Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value)),
                 )
                 route.dependant = get_dependant(path=route.path_format, call=route.endpoint)
                 for depends in route.dependencies[::-1]:
@@ -171,15 +174,7 @@ class HeaderRoutingFastAPI(FastAPI):
             ).date()
         except ValueError as e:
             raise ValueError(f"header_value should be in `{VERSION_HEADER_FORMAT}` format") from e
-        # TODO:
-        # Override this method in monite-server to:
-        # super().add_header_versioned_routers(*routers, header_value=header_value)
-        # for routes in self.router.versioned_routes.values():
-        #     for route in routes:
-        #         if isinstance(route, APIRoute):
-        #            _rename_file_schemas(route)
-        #            if not route.responses:
-        #                route.responses = responses
+
         for router in routers:
             last_routes = len(router.routes)
             self.include_router(router)
