@@ -1,10 +1,10 @@
-from fastapi import Request
+from fastapi import Request, APIRouter
 from starlette.responses import JSONResponse, Response
 
-from verselect import create_app
-from verselect.routing import MoniteAPIRouter
 
-router = MoniteAPIRouter(enable_internal_request_headers=False)
+from verselect import HeaderRoutingFastAPI
+
+router = APIRouter(prefix="/v1")
 
 
 @router.get("/")
@@ -37,7 +37,7 @@ versions = [
     "2027-11-15",
     "2022-04-14",
 ]
-mixed_hosts_app = create_app()
+mixed_hosts_app = HeaderRoutingFastAPI()
 for version in versions:
     mixed_hosts_app.add_header_versioned_routers(
         router,
