@@ -31,14 +31,15 @@ class HeaderRoutingFastAPI(FastAPI):
         *args: Any,
         api_version_header_name: str = "X-API-VERSION",
         api_version_var: ContextVar[date] | ContextVar[date | None] | None = None,
-        routes: None = None,
+        routes: None = None,  # TODO: Add support for this argument
+        docs_url: str | None = "/docs",
+        redoc_url: None = None,
+        openapi_url: str | None = "/openapi.json",
         **kwargs: Any,
     ):
         if api_version_var is None:
             api_version_var = ContextVar("api_header_version")
         self.api_version_var = api_version_var
-        kwargs["docs_url"] = None
-        kwargs["redoc_url"] = None
         if routes:
             raise VerselectAppCreationError(
                 f"It's prohibited to pass routes to {HeaderRoutingFastAPI.__name__}. "
@@ -60,16 +61,21 @@ class HeaderRoutingFastAPI(FastAPI):
         )
         self.swaggers = {}
         router = APIRouter()
-        router.add_route(
-            path="/docs",
-            endpoint=self.swagger_dashboard,
-            include_in_schema=False,
-        )
-        router.add_route(
-            path="/openapi.json",
-            endpoint=self.openapi_jsons,
-            include_in_schema=False,
-        )
+        self.docs_url = docs_url
+        self.openapi_url = openapi_url
+
+        if self.openapi_url is not None:
+            router.add_route(
+                path=self.openapi_url,
+                endpoint=self.openapi_jsons,
+                include_in_schema=False,
+            )
+            if self.docs_url is not None:
+                router.add_route(
+                    path=self.docs_url,
+                    endpoint=self.swagger_dashboard,
+                    include_in_schema=False,
+                )
         self.add_unversioned_routers(router)
 
         def middleware(*a: Any, **kw: Any) -> HeaderVersioningMiddleware:
@@ -110,7 +116,7 @@ class HeaderRoutingFastAPI(FastAPI):
                 if not isinstance(route, APIRoute):
                     continue
                 route.dependencies.append(
-                    Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value)),
+                    Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value.isoformat())),
                 )
                 route.dependant = get_dependant(path=route.path_format, call=route.endpoint)
                 for depends in route.dependencies[::-1]:
