@@ -174,17 +174,14 @@ class HeaderRoutingFastAPI(FastAPI):
         header_value: str,
     ) -> None:
         try:
-            header_value_as_dt = datetime.strptime(
-                header_value,
-                VERSION_HEADER_FORMAT,
-            ).date()
+            header_value_as_dt = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()
         except ValueError as e:
             raise ValueError(f"header_value should be in `{VERSION_HEADER_FORMAT}` format") from e
 
         for router in routers:
             last_routes = len(router.routes)
             self.include_router(router)
-            for route in self.routes[-last_routes:]:
+            for route in self.routes[len(self.routes) - last_routes :]:
                 self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
 
         self.enrich_swagger()

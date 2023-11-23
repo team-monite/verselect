@@ -1,3 +1,4 @@
+from datetime import date
 import re
 from typing import cast
 from fastapi.routing import APIRoute
@@ -43,6 +44,12 @@ def test__header_routing_fastapi_init__openapi_passing():
         "/openapi.json",
     ]
     assert HeaderRoutingFastAPI(openapi_url=None).routes == []
+
+
+def test__header_routing_fastapi_add_header_versioned_routers__apirouter_is_empty__version_should_not_have_any_routes():
+    app = HeaderRoutingFastAPI()
+    app.add_header_versioned_routers(APIRouter(), header_value="2022-11-16")
+    assert app.router.versioned_routes == {}
 
 
 @pytest.mark.parametrize("client", [client_without_headers, client_without_headers_and_with_custom_api_version_var])
