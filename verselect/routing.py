@@ -33,7 +33,7 @@ class RootHeaderAPIRouter(APIRouter):
 
     def __init__(self, *args: Any, api_version_header_name: str, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.versioned_routes = {}
+        self.versioned_routes: dict[date, list[APIRoute]] = {}
         self.unversioned_routes = []
         self.api_version_header_name = api_version_header_name.lower()
 
