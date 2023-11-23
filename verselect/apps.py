@@ -46,7 +46,7 @@ class HeaderRoutingFastAPI(FastAPI):
                 f"Please use `{self.add_header_versioned_routers.__name__}` "
                 f"or `{self.add_unversioned_routers.__name__}`",
             )
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, openapi_url=None, docs_url=None, redoc_url=None)
         self.router: RootHeaderAPIRouter = RootHeaderAPIRouter(
             routes=self.routes,
             on_startup=kwargs.get("on_startup"),

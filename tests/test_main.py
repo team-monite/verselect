@@ -1,8 +1,11 @@
 import re
+from typing import cast
+from fastapi.routing import APIRoute
 
 import pytest
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
+from starlette.routing import Route
 
 from tests._resources.utils import BASIC_HEADERS, DEFAULT_API_VERSION
 from tests._resources.versioned_app.app import (
@@ -29,6 +32,17 @@ def test__header_routing_fastapi_init__routes_were_passed__should_raise_error():
         ),
     ):
         HeaderRoutingFastAPI(routes=[1])  # pyright: ignore[reportGeneralTypeIssues]
+
+
+def test__header_routing_fastapi_init__openapi_passing():
+    assert [cast(APIRoute, r).path for r in HeaderRoutingFastAPI().routes] == [
+        "/openapi.json",
+        "/docs",
+    ]
+    assert [cast(APIRoute, r).path for r in HeaderRoutingFastAPI(docs_url=None).routes] == [
+        "/openapi.json",
+    ]
+    assert HeaderRoutingFastAPI(openapi_url=None).routes == []
 
 
 @pytest.mark.parametrize("client", [client_without_headers, client_without_headers_and_with_custom_api_version_var])
