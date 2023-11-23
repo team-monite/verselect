@@ -12,10 +12,10 @@ from starlette.types import ASGIApp
 
 
 def _get_api_version_dependency(api_version_header_name: str, version_example: str):
-    def wrapped(**kwargs: Any):
-        raise NotImplementedError
+    def api_version_dependency(**kwargs: Any):
+        return next(iter(kwargs.values()))
 
-    wrapped.__signature__ = inspect.Signature(
+    api_version_dependency.__signature__ = inspect.Signature(
         parameters=[
             inspect.Parameter(
                 api_version_header_name.replace("-", "_"),
@@ -24,7 +24,7 @@ def _get_api_version_dependency(api_version_header_name: str, version_example: s
             ),
         ],
     )
-    return wrapped
+    return api_version_dependency
 
 
 class HeaderVersioningMiddleware(BaseHTTPMiddleware):
@@ -41,7 +41,8 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         # We use the dependant to apply fastapi's validation to the header, making validation at middleware level
         # consistent with validation and route level.
         self.version_header_validation_dependant = get_dependant(
-            path="", call=_get_api_version_dependency(api_version_header_name, "2000-08-23"),
+            path="",
+            call=_get_api_version_dependency(api_version_header_name, "2000-08-23"),
         )
 
     async def dispatch(
@@ -54,7 +55,8 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         api_version: date | None
         if self.api_version_header_name in request.headers:
             solved_result = await solve_dependencies(
-                request=request, dependant=self.version_header_validation_dependant,
+                request=request,
+                dependant=self.version_header_validation_dependant,
             )
             values, errors, *_ = solved_result
             if errors:

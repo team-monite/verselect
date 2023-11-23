@@ -112,19 +112,6 @@ class HeaderRoutingFastAPI(FastAPI):
 
         for header_value, routes in self.router.versioned_routes.items():
             header_value_str = header_value.strftime(VERSION_HEADER_FORMAT)
-            for route in routes:
-                if not isinstance(route, APIRoute):
-                    continue
-                route.dependencies.append(
-                    Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value.isoformat())),
-                )
-                route.dependant = get_dependant(path=route.path_format, call=route.endpoint)
-                for depends in route.dependencies[::-1]:
-                    route.dependant.dependencies.insert(
-                        0,
-                        get_parameterless_sub_dependant(depends=depends, path=route.path_format),
-                    )
-
             openapi = get_openapi(
                 title=self.title,
                 version=self.version,
@@ -180,7 +167,10 @@ class HeaderRoutingFastAPI(FastAPI):
 
         for router in routers:
             last_routes = len(router.routes)
-            self.include_router(router)
+            self.include_router(
+                router,
+                dependencies=[Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value))],
+            )
             for route in self.routes[len(self.routes) - last_routes :]:
                 self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
 
