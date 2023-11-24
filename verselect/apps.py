@@ -40,7 +40,7 @@ class HeaderRoutingFastAPI(FastAPI):
         if api_version_var is None:
             api_version_var = ContextVar("api_header_version")
         self.api_version_var = api_version_var
-        if routes:
+        if routes is not None:
             raise VerselectAppCreationError(
                 f"It's prohibited to pass routes to {HeaderRoutingFastAPI.__name__}. "
                 f"Please use `{self.add_header_versioned_routers.__name__}` "
