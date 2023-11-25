@@ -1,2 +1,2 @@
-class VerselectAppCreationError(Exception):
+class AppCreationError(Exception):
     pass
