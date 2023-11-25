@@ -1,12 +1,10 @@
-from datetime import date
 import re
 from typing import cast
-from fastapi.routing import APIRoute
 
 import pytest
 from fastapi import APIRouter
+from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
-from starlette.routing import Route
 
 from tests._resources.utils import BASIC_HEADERS, DEFAULT_API_VERSION
 from tests._resources.versioned_app.app import (
@@ -14,7 +12,6 @@ from tests._resources.versioned_app.app import (
     client_without_headers_and_with_custom_api_version_var,
 )
 from verselect.apps import HeaderRoutingFastAPI
-from verselect.exceptions import VerselectAppCreationError
 
 
 def test__header_routing__invalid_version_format__error():
@@ -22,17 +19,6 @@ def test__header_routing__invalid_version_format__error():
     main_app.add_header_versioned_routers(header_value=DEFAULT_API_VERSION)
     with pytest.raises(ValueError, match=re.escape("header_value should be in `%Y-%m-%d` format")):
         main_app.add_header_versioned_routers(APIRouter(), header_value="2022-01_01")
-
-
-def test__header_routing_fastapi_init__routes_were_passed__should_raise_error():
-    with pytest.raises(
-        VerselectAppCreationError,
-        match=re.escape(
-            "It's prohibited to pass routes to HeaderRoutingFastAPI. "
-            "Please use `add_header_versioned_routers` or `add_unversioned_routers`",
-        ),
-    ):
-        HeaderRoutingFastAPI(routes=[1])  # pyright: ignore[reportGeneralTypeIssues]
 
 
 def test__header_routing_fastapi_init__openapi_passing():

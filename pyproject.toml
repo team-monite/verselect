@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "verselect"
-version = "0.0.2"
+version = "0.0.5"
 description = ""
 authors = ["Bogdan Evstratenko <evstrat.bg@gmail.com>", "Stanislav Zmiev <zmievsa@gmail.com>"]
 repository = "https://github.com/team-monite/verselect"
@@ -32,7 +32,6 @@ python = "^3.10"
 fastapi = ">=0.103.1"
 jinja2 = ">=3.1.2"
 httpx = ">=0.25.0"
-orjson = ">=3.8.0"
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = {version = "^0.23.2", extras = ["standard"]}

@@ -3,10 +3,10 @@ from contextvars import ContextVar
 from datetime import date
 from typing import Annotated, Any, cast
 
-from fastapi import Header, Request
+from fastapi import Header, Request, Response
 from fastapi._compat import _normalize_errors
 from fastapi.dependencies.utils import get_dependant, solve_dependencies
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
@@ -31,13 +31,16 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
+        *,
         api_version_header_name: str,
         api_version_var: ContextVar[date] | ContextVar[date | None],
+        default_response_class: type[Response] = JSONResponse,
         dispatch: DispatchFunction | None = None,
     ) -> None:
         super().__init__(app, dispatch)
         self.api_version_header_name = api_version_header_name
         self.api_version_var = api_version_var
+        self.default_response_class = default_response_class
         # We use the dependant to apply fastapi's validation to the header, making validation at middleware level
         # consistent with validation and route level.
         self.version_header_validation_dependant = get_dependant(
@@ -60,7 +63,7 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
             )
             values, errors, *_ = solved_result
             if errors:
-                return ORJSONResponse(status_code=422, content=_normalize_errors(errors))
+                return self.default_response_class(status_code=422, content=_normalize_errors(errors))
             api_version = cast(date, values[self.api_version_header_name.replace("-", "_")])
             self.api_version_var.set(api_version)
         else:

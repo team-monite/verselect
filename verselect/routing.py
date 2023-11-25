@@ -5,10 +5,10 @@ from functools import cached_property
 from logging import getLogger
 from typing import Any, Sequence
 
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRouter
 from starlette.datastructures import URL
 from starlette.responses import RedirectResponse
-from starlette.routing import Match
+from starlette.routing import BaseRoute, Match
 from starlette.types import Receive, Scope, Send
 
 VERSION_HEADER_FORMAT = "%Y-%m-%d"
@@ -33,8 +33,8 @@ class RootHeaderAPIRouter(APIRouter):
 
     def __init__(self, *args: Any, api_version_header_name: str, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.versioned_routes: dict[date, list[APIRoute]] = {}
-        self.unversioned_routes = []
+        self.versioned_routes: dict[date, list[BaseRoute]] = {}
+        self.unversioned_routes: list[BaseRoute] = []
         self.api_version_header_name = api_version_header_name.lower()
 
     @cached_property
@@ -56,7 +56,7 @@ class RootHeaderAPIRouter(APIRouter):
     def pick_version(
         self,
         request_header_value: date,
-    ) -> list[APIRoute]:
+    ) -> list[BaseRoute]:
         routes = []
         request_version = request_header_value.strftime(VERSION_HEADER_FORMAT)
 
@@ -101,7 +101,7 @@ class RootHeaderAPIRouter(APIRouter):
             routes = self.pick_version(request_header_value=header_value)
         await self.process_request(scope=scope, receive=receive, send=send, routes=routes)
 
-    async def process_request(self, scope: Scope, receive: Receive, send: Send, routes: Sequence[APIRoute]) -> None:
+    async def process_request(self, scope: Scope, receive: Receive, send: Send, routes: Sequence[BaseRoute]) -> None:
         """
         its a copy-paste from starlette.routing.Router
         but in this version self.routes were replaced with routes from the function arguments

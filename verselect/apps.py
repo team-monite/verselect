@@ -2,20 +2,19 @@ from contextvars import ContextVar
 from datetime import date, datetime
 from logging import getLogger
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, Dict, List, Sequence, cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
-from fastapi.dependencies.utils import get_dependant, get_parameterless_sub_dependant
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from fastapi.params import Depends as DependsType
 from fastapi.responses import JSONResponse
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
-from starlette.routing import Route
+from starlette.routing import BaseRoute, Route
 
 from verselect.routing import VERSION_HEADER_FORMAT
 
-from .exceptions import VerselectAppCreationError
 from .middleware import HeaderVersioningMiddleware, _get_api_version_dependency
 from .routing import RootHeaderAPIRouter
 
@@ -31,36 +30,36 @@ class HeaderRoutingFastAPI(FastAPI):
         *args: Any,
         api_version_header_name: str = "X-API-VERSION",
         api_version_var: ContextVar[date] | ContextVar[date | None] | None = None,
-        routes: None = None,  # TODO: Add support for this argument
+        routes: list[BaseRoute] | None = None,
         docs_url: str | None = "/docs",
         redoc_url: None = None,
         openapi_url: str | None = "/openapi.json",
+        default_response_class: type[Response] = JSONResponse,
+        responses: Dict[int | str, Dict[str, Any]] | None = None,
+        deprecated: bool | None = None,
+        dependencies: Sequence[DependsType] | None = None,
+        on_startup: Sequence[Callable[[], Any]] | None = None,
+        on_shutdown: Sequence[Callable[[], Any]] | None = None,
+        callbacks: List[BaseRoute] | None = None,
         **kwargs: Any,
     ):
         if api_version_var is None:
             api_version_var = ContextVar("api_header_version")
         self.api_version_var = api_version_var
-        if routes is not None:
-            raise VerselectAppCreationError(
-                f"It's prohibited to pass routes to {HeaderRoutingFastAPI.__name__}. "
-                f"Please use `{self.add_header_versioned_routers.__name__}` "
-                f"or `{self.add_unversioned_routers.__name__}`",
-            )
         super().__init__(*args, **kwargs, openapi_url=None, docs_url=None, redoc_url=None)
         self.router: RootHeaderAPIRouter = RootHeaderAPIRouter(
             routes=self.routes,
-            on_startup=kwargs.get("on_startup"),
-            on_shutdown=kwargs.get("on_shutdown"),
-            default_response_class=kwargs.get("default_response_class", JSONResponse),
-            dependencies=kwargs.get("dependencies"),
-            callbacks=kwargs.get("callbacks"),
-            deprecated=kwargs.get("deprecated"),
-            include_in_schema=kwargs.get("include_in_schema", True),
-            responses=kwargs.get("responses"),
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            default_response_class=default_response_class,
+            dependencies=dependencies,
+            callbacks=callbacks,
+            deprecated=deprecated,
+            responses=responses,
             api_version_header_name=api_version_header_name,
         )
         self.swaggers = {}
-        router = APIRouter()
+        router = APIRouter(routes=routes)
         self.docs_url = docs_url
         self.openapi_url = openapi_url
 
@@ -83,6 +82,7 @@ class HeaderRoutingFastAPI(FastAPI):
                 *a,
                 api_version_header_name=self.router.api_version_header_name,
                 api_version_var=self.api_version_var,
+                default_response_class=default_response_class,
                 **kw,
             )
 
