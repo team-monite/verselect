@@ -2,7 +2,7 @@ from contextvars import ContextVar
 from datetime import date, datetime
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Sequence, cast
+from typing import Any, Callable, Dict, List, Sequence
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -76,17 +76,12 @@ class HeaderRoutingFastAPI(FastAPI):
                     include_in_schema=False,
                 )
         self.add_unversioned_routers(router)
-
-        def middleware(*a: Any, **kw: Any) -> HeaderVersioningMiddleware:
-            return HeaderVersioningMiddleware(
-                *a,
-                api_version_header_name=self.router.api_version_header_name,
-                api_version_var=self.api_version_var,
-                default_response_class=default_response_class,
-                **kw,
-            )
-
-        self.add_middleware(cast(Any, middleware))
+        self.add_middleware(
+            HeaderVersioningMiddleware,
+            api_version_header_name=self.router.api_version_header_name,
+            api_version_var=self.api_version_var,
+            default_response_class=default_response_class,
+        )
 
     def enrich_swagger(self):
         """
@@ -143,7 +138,7 @@ class HeaderRoutingFastAPI(FastAPI):
         version = req.query_params.get("version")
         if version:
             return get_swagger_ui_html(
-                openapi_url=f"/openapi.json?version={version}",
+                openapi_url=f"{self.openapi_url}?version={version}",
                 title="Swagger UI",
             )
 
@@ -151,7 +146,7 @@ class HeaderRoutingFastAPI(FastAPI):
             "docs.html",
             {
                 "request": req,
-                "table": {version: f"{base_url}/docs?version={version}" for version in sorted(self.swaggers)},
+                "table": {version: f"{base_url}{self.docs_url}?version={version}" for version in sorted(self.swaggers)},
             },
         )
 
@@ -166,12 +161,12 @@ class HeaderRoutingFastAPI(FastAPI):
             raise ValueError(f"header_value should be in `{VERSION_HEADER_FORMAT}` format") from e
 
         for router in routers:
-            last_routes = len(router.routes)
+            added_route_count = len(router.routes)
             self.include_router(
                 router,
                 dependencies=[Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value))],
             )
-            for route in self.routes[len(self.routes) - last_routes :]:
+            for route in self.routes[len(self.routes) - added_route_count :]:
                 self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
 
         self.enrich_swagger()

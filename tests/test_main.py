@@ -10,6 +10,8 @@ from tests._resources.utils import BASIC_HEADERS, DEFAULT_API_VERSION
 from tests._resources.versioned_app.app import (
     client_without_headers,
     client_without_headers_and_with_custom_api_version_var,
+    v2021_01_01_router,
+    v2022_01_02_router,
 )
 from verselect.apps import HeaderRoutingFastAPI
 
@@ -21,7 +23,7 @@ def test__header_routing__invalid_version_format__error():
         main_app.add_header_versioned_routers(APIRouter(), header_value="2022-01_01")
 
 
-def test__header_routing_fastapi_init__openapi_passing():
+def test__header_routing_fastapi_init__openapi_passing__nulls_prevent_openapi_routes_from_generating():
     assert [cast(APIRoute, r).path for r in HeaderRoutingFastAPI().routes] == [
         "/openapi.json",
         "/docs",
@@ -30,6 +32,16 @@ def test__header_routing_fastapi_init__openapi_passing():
         "/openapi.json",
     ]
     assert HeaderRoutingFastAPI(openapi_url=None).routes == []
+
+
+def test__header_routing_fastapi_init__changing_openapi_url__docs_still_return_200():
+    app = HeaderRoutingFastAPI(openapi_url="/openpapi")
+    client = TestClient(app)
+    app.add_header_versioned_routers(v2021_01_01_router, header_value="2021-01-01")
+    app.add_header_versioned_routers(v2022_01_02_router, header_value="2022-02-02")
+    assert client.get("/docs").status_code == 200
+    assert client.get("/docs?version=2021-01-01").status_code == 200
+    assert client.get("/docs?version=2022-02-02").status_code == 200
 
 
 def test__header_routing_fastapi_add_header_versioned_routers__apirouter_is_empty__version_should_not_have_any_routes():
