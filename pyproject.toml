@@ -1,6 +1,5 @@
 [tool.poetry]
-name = "verselect-zmievsa"
-packages = [{include="verselect"}]
+name = "verselect"
 version = "0.0.6"
 description = ""
 authors = ["Bogdan Evstratenko <evstrat.bg@gmail.com>", "Stanislav Zmiev <zmievsa@gmail.com>"]
