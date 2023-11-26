@@ -13,7 +13,7 @@ from tests._resources.versioned_app.app import (
     v2021_01_01_router,
     v2022_01_02_router,
 )
-from verselect.apps import HeaderRoutingFastAPI
+from verselect.app import HeaderRoutingFastAPI
 
 
 def test__header_routing__invalid_version_format__error():

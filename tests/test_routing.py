@@ -5,7 +5,7 @@ from starlette.routing import Match, NoMatchFound, Route
 from starlette.testclient import TestClient
 
 from tests._resources.app_for_testing_routing import mixed_hosts_app
-from verselect.apps import HeaderRoutingFastAPI
+from verselect.app import HeaderRoutingFastAPI
 
 
 def test__header_routing():
