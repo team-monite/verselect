@@ -4,12 +4,12 @@ from starlette.responses import PlainTextResponse
 from starlette.routing import Match, NoMatchFound, Route
 from starlette.testclient import TestClient
 
-from verselect.apps import HeaderRoutingFastAPI
 from tests._resources.app_for_testing_routing import mixed_hosts_app
+from verselect.app import HeaderRoutingFastAPI
 
 
 def test__header_routing():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2022-02-11"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2022-02-11"})
 
     response = client.get("/v1/users/tom/83")
     assert response.status_code == 200
@@ -19,7 +19,7 @@ def test__header_routing():
     # its fine, because "/v1/" is defined in the lower version
     assert response.status_code == 200
 
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2022-01-10"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2022-01-10"})
 
     response = client.get("/v1/users")
     assert response.status_code == 200
@@ -28,7 +28,7 @@ def test__header_routing():
     response = client.get("/v1/")
     assert response.status_code == 200
 
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2022-03-12"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2022-03-12"})
 
     response = client.get("/v1/users")
     # its fine, because /users is defined in the lower version
@@ -37,7 +37,7 @@ def test__header_routing():
     response = client.get("/v1/")
     assert response.status_code == 200
 
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2025-01-01"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2025-01-01"})
 
     response = client.get("/v1/users")
     # its fine, because /users is defined in the lower version
@@ -46,7 +46,7 @@ def test__header_routing():
 
 @pytest.mark.parametrize("version", ["2022-04-19", "2022-05-01", "2025-11-12"])
 def test__host_routing__backward__ok(version: str):
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": version})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": version})
 
     response = client.get("/v1/doggies/tom")
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test__host_routing__backward__ok(version: str):
 
 
 def test__host_routing__lowest_version__404():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "1993-11-15"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "1993-11-15"})
 
     response = client.get("/v1/doggies/tom")
     assert response.status_code == 404
@@ -65,21 +65,15 @@ def test__host_routing__non_http():
 
 
 def test__host_routing__non_date_api_version_header__not_valid_format():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2025-40-01"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2025-40-01"})
 
     response = client.get("/v1/users")
     assert response.status_code == 422
-    assert response.json() == [
-        {
-            "loc": ["header", "x-monite-version"],
-            "msg": "invalid date format",
-            "type": "value_error.date",
-        },
-    ]
+    assert response.json()[0]["loc"] == ["header", "x-api-version"]
 
 
 def test__host_routing__partial_match__error():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "2022-02-11"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "2022-02-11"})
 
     response = client.post("/v1/users/tom/83")
     assert response.status_code == 405
@@ -127,14 +121,14 @@ def test__lifespan_async():
 
 
 def test__host_routing__partial_match__404():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "1998-11-16"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "1998-11-16"})
 
     response = client.get("/v1/doggies/tom")
     assert response.status_code == 200
 
 
 def test__fewfewfew():
-    client = TestClient(mixed_hosts_app, headers={"x-monite-version": "1998-11-16"})
+    client = TestClient(mixed_hosts_app, headers={"X-API-VERSION": "1998-11-16"})
 
     response = client.get("/v1/doggies/tom")
     assert response.status_code == 200

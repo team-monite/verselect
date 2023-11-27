@@ -1,8 +1,7 @@
+from fastapi.routing import APIRouter
 from pydantic import BaseModel
 
-from verselect import MoniteAPIRouter
-
-router = MoniteAPIRouter(enable_internal_request_headers=False)
+router = APIRouter(prefix="/v1")
 
 
 class SecondVersionResponseModel(BaseModel):

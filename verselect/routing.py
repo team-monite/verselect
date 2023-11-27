@@ -5,30 +5,15 @@ from functools import cached_property
 from logging import getLogger
 from typing import Any, Sequence
 
-from fastapi import Depends
-from fastapi.routing import APIRoute, APIRouter
+from fastapi.routing import APIRouter
 from starlette.datastructures import URL
 from starlette.responses import RedirectResponse
-from starlette.routing import Match
+from starlette.routing import BaseRoute, Match
 from starlette.types import Receive, Scope, Send
 
-from .configs import X_MONITE_VERSION_HEADER_NAME, X_MONITE_VERSION_HEADER_VALUE_FORMAT
-from .dependencies import internal_request_headers
-from .responses import CustomORJSONResponse
-from .utils import generate_unique_id
+VERSION_HEADER_FORMAT = "%Y-%m-%d"
 
 logger = getLogger(__name__)
-
-
-class MoniteAPIRouter(APIRouter):
-    def __init__(self, enable_internal_request_headers: bool, *args: Any, **kwargs: Any):
-        if enable_internal_request_headers:
-            kwargs["dependencies"] = kwargs.get("dependencies", [])
-            kwargs["dependencies"].append(Depends(internal_request_headers))
-        kwargs["generate_unique_id_function"] = generate_unique_id
-        kwargs["default_response_class"] = CustomORJSONResponse
-        kwargs["prefix"] = kwargs.get("prefix", "/v1")
-        super().__init__(*args, **kwargs)
 
 
 class RootHeaderAPIRouter(APIRouter):
@@ -46,11 +31,11 @@ class RootHeaderAPIRouter(APIRouter):
     matched to the higher versioned route
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        kwargs["default_response_class"] = CustomORJSONResponse
+    def __init__(self, *args: Any, api_version_header_name: str, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.versioned_routes = {}
-        self.unversioned_routes = []
+        self.versioned_routes: dict[date, list[BaseRoute]] = {}
+        self.unversioned_routes: list[BaseRoute] = []
+        self.api_version_header_name = api_version_header_name.lower()
 
     @cached_property
     def sorted_versioned_routes(self):
@@ -71,16 +56,16 @@ class RootHeaderAPIRouter(APIRouter):
     def pick_version(
         self,
         request_header_value: date,
-    ) -> list[APIRoute]:
+    ) -> list[BaseRoute]:
         routes = []
-        request_version = request_header_value.strftime(X_MONITE_VERSION_HEADER_VALUE_FORMAT)
+        request_version = request_header_value.strftime(VERSION_HEADER_FORMAT)
 
         if self.min_routes_version > request_header_value:
             # then the request version is older that the oldest route we have
             logger.info(
                 f"Request version {request_version} "
                 f"is older than the oldest "
-                f"version {self.min_routes_version.strftime(X_MONITE_VERSION_HEADER_VALUE_FORMAT)}",
+                f"version {self.min_routes_version.strftime(VERSION_HEADER_FORMAT)}",
             )
             return routes
         version_chosen = self.find_closest_date_but_not_new(request_header_value)
@@ -102,10 +87,9 @@ class RootHeaderAPIRouter(APIRouter):
             return
 
         request_headers = dict(scope["headers"])
-
-        header_value = request_headers.get(X_MONITE_VERSION_HEADER_NAME.encode(), b"").decode()
+        header_value = request_headers.get(self.api_version_header_name.encode(), b"").decode()
         if header_value:
-            header_value = datetime.strptime(header_value, X_MONITE_VERSION_HEADER_VALUE_FORMAT).date()
+            header_value = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()
 
         # if header_value is None, then it's an unversioned request and we need to use the unversioned routes
         # if there will be a value, we search for the most suitable version
@@ -117,7 +101,7 @@ class RootHeaderAPIRouter(APIRouter):
             routes = self.pick_version(request_header_value=header_value)
         await self.process_request(scope=scope, receive=receive, send=send, routes=routes)
 
-    async def process_request(self, scope: Scope, receive: Receive, send: Send, routes: Sequence[APIRoute]) -> None:
+    async def process_request(self, scope: Scope, receive: Receive, send: Send, routes: Sequence[BaseRoute]) -> None:
         """
         its a copy-paste from starlette.routing.Router
         but in this version self.routes were replaced with routes from the function arguments
@@ -125,7 +109,6 @@ class RootHeaderAPIRouter(APIRouter):
 
         partial = None
         partial_scope = {}
-
         for route in routes:
             # Determine if any route matches the incoming scope,
             # and hand over to the matching route if found.
