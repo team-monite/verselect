@@ -20,7 +20,7 @@ def _get_api_version_dependency(api_version_header_name: str, version_example: s
             inspect.Parameter(
                 api_version_header_name.replace("-", "_"),
                 inspect.Parameter.KEYWORD_ONLY,
-                annotation=Annotated[date, Header(examples={"default": {"value": version_example}})],  # pyright: ignore
+                annotation=Annotated[date, Header(examples=[version_example])],
             ),
         ],
     )
