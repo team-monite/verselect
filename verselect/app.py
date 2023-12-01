@@ -170,11 +170,8 @@ class HeaderRoutingFastAPI(FastAPI):
             )
             added_routes.extend(self.routes[len(self.routes) - added_route_count :])
 
-        if header_value_as_dt not in self.router.versioned_routes:
-            self.router.versioned_routes[header_value_as_dt] = []
-
         for route in added_routes:
-            self.router.versioned_routes[header_value_as_dt].append(route)
+            self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
 
         self.enrich_swagger()
         return added_routes

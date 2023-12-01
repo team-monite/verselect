@@ -1,4 +1,3 @@
-import datetime
 import re
 from typing import cast
 
@@ -47,9 +46,7 @@ def test__header_routing_fastapi_init__changing_openapi_url__docs_still_return_2
 def test__header_routing_fastapi_add_header_versioned_routers__apirouter_is_empty__version_should_not_have_any_routes():
     app = HeaderRoutingFastAPI()
     app.add_header_versioned_routers(APIRouter(), header_value="2022-11-16")
-    assert app.router.versioned_routes == {datetime.date(2022, 11, 16): []}
-    app.add_header_versioned_routers(APIRouter(), header_value="2022-11-16")
-    assert app.router.versioned_routes == {datetime.date(2022, 11, 16): []}
+    assert app.router.versioned_routes == {}
 
 
 @pytest.mark.parametrize("client", [client_without_headers, client_without_headers_and_with_custom_api_version_var])
