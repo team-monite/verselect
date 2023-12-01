@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "verselect"
-version = "0.0.6"
+version = "0.1.0"
 description = ""
 authors = ["Bogdan Evstratenko <evstrat.bg@gmail.com>", "Stanislav Zmiev <zmievsa@gmail.com>"]
 repository = "https://github.com/team-monite/verselect"

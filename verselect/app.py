@@ -154,22 +154,27 @@ class HeaderRoutingFastAPI(FastAPI):
         self,
         *routers: APIRouter,
         header_value: str,
-    ) -> None:
+    ) -> list[BaseRoute]:
+        """Add all routes from routers to be routed using header_value and return the added routes"""
         try:
             header_value_as_dt = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()
         except ValueError as e:
             raise ValueError(f"header_value should be in `{VERSION_HEADER_FORMAT}` format") from e
 
+        added_routes: list[BaseRoute] = []
         for router in routers:
             added_route_count = len(router.routes)
             self.include_router(
                 router,
                 dependencies=[Depends(_get_api_version_dependency(self.router.api_version_header_name, header_value))],
             )
-            for route in self.routes[len(self.routes) - added_route_count :]:
-                self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
+            added_routes.extend(self.routes[len(self.routes) - added_route_count :])
+
+        for route in added_routes:
+            self.router.versioned_routes.setdefault(header_value_as_dt, []).append(route)
 
         self.enrich_swagger()
+        return added_routes
 
     def add_unversioned_routers(self, *routers: APIRouter):
         for router in routers:
