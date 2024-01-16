@@ -1,8 +1,8 @@
 import inspect
+from contextlib import AsyncExitStack
 from contextvars import ContextVar
 from datetime import date
 from typing import Annotated, Any, cast
-from contextlib import AsyncExitStack
 
 from fastapi import Header, Request, Response
 from fastapi._compat import _normalize_errors
@@ -54,28 +54,28 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         request: Request,
         call_next: RequestResponseEndpoint,
     ):
-        async with AsyncExitStack() as async_exit_stack:
-            # We handle api version at middleware level because if we try to add a Dependency to all routes, it won't work:
-            # we use this header for routing so the user will simply get a 404 if the header is invalid.
-            api_version: date | None
-            if self.api_version_header_name in request.headers:
+        # We handle api version at middleware level because if we try to add a Dependency to all routes, it won't work:
+        # we use this header for routing so the user will simply get a 404 if the header is invalid.
+        api_version: date | None
+        if self.api_version_header_name in request.headers:
+            async with AsyncExitStack() as async_exit_stack:
                 solved_result = await solve_dependencies(
                     request=request,
                     dependant=self.version_header_validation_dependant,
                     async_exit_stack=async_exit_stack,
                 )
-                values, errors, *_ = solved_result
-                if errors:
-                    return self.default_response_class(status_code=422, content=_normalize_errors(errors))
-                api_version = cast(date, values[self.api_version_header_name.replace("-", "_")])
-                self.api_version_var.set(api_version)
-            else:
-                api_version = None
+            values, errors, *_ = solved_result
+            if errors:
+                return self.default_response_class(status_code=422, content=_normalize_errors(errors))
+            api_version = cast(date, values[self.api_version_header_name.replace("-", "_")])
+            self.api_version_var.set(api_version)
+        else:
+            api_version = None
 
-            response = await call_next(request)
+        response = await call_next(request)
 
-            if api_version is not None:
-                # We return it because we will be returning the **matched** version, not the requested one.
-                response.headers[self.api_version_header_name] = api_version.isoformat()
+        if api_version is not None:
+            # We return it because we will be returning the **matched** version, not the requested one.
+            response.headers[self.api_version_header_name] = api_version.isoformat()
 
-            return response
+        return response
