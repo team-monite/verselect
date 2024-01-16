@@ -1,4 +1,5 @@
 import inspect
+from contextlib import AsyncExitStack
 from contextvars import ContextVar
 from datetime import date
 from typing import Annotated, Any, cast
@@ -57,10 +58,12 @@ class HeaderVersioningMiddleware(BaseHTTPMiddleware):
         # we use this header for routing so the user will simply get a 404 if the header is invalid.
         api_version: date | None
         if self.api_version_header_name in request.headers:
-            solved_result = await solve_dependencies(
-                request=request,
-                dependant=self.version_header_validation_dependant,
-            )
+            async with AsyncExitStack() as async_exit_stack:
+                solved_result = await solve_dependencies(
+                    request=request,
+                    dependant=self.version_header_validation_dependant,
+                    async_exit_stack=async_exit_stack,
+                )
             values, errors, *_ = solved_result
             if errors:
                 return self.default_response_class(status_code=422, content=_normalize_errors(errors))

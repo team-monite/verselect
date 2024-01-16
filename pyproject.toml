@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "verselect"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Bogdan Evstratenko <evstrat.bg@gmail.com>", "Stanislav Zmiev <zmievsa@gmail.com>"]
 repository = "https://github.com/team-monite/verselect"
@@ -30,7 +30,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = ">=0.103.1"
+fastapi = ">=0.109.0"
 jinja2 = ">=3.1.2"
 httpx = ">=0.25.0"
 
