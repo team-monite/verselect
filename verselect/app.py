@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from datetime import date, datetime
+from datetime import date
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence
@@ -12,8 +12,6 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
 from starlette.routing import BaseRoute, Route
-
-from verselect.routing import VERSION_HEADER_FORMAT
 
 from .middleware import HeaderVersioningMiddleware, _get_api_version_dependency
 from .routing import RootHeaderAPIRouter
@@ -106,7 +104,7 @@ class HeaderRoutingFastAPI(FastAPI):
             self.swaggers["unversioned"] = unversioned_routes_openapi
 
         for header_value, routes in self.router.versioned_routes.items():
-            header_value_str = header_value.strftime(VERSION_HEADER_FORMAT)
+            header_value_str = header_value.isoformat()
             openapi = get_openapi(
                 title=self.title,
                 version=self.version,
@@ -157,9 +155,9 @@ class HeaderRoutingFastAPI(FastAPI):
     ) -> list[BaseRoute]:
         """Add all routes from routers to be routed using header_value and return the added routes"""
         try:
-            header_value_as_dt = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()
+            header_value_as_dt = date.fromisoformat(header_value)
         except ValueError as e:
-            raise ValueError(f"header_value should be in `{VERSION_HEADER_FORMAT}` format") from e
+            raise ValueError("header_value should be in ISO 8601 format") from e
 
         added_routes: list[BaseRoute] = []
         for router in routers:

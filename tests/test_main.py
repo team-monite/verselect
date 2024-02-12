@@ -19,7 +19,7 @@ from verselect.app import HeaderRoutingFastAPI
 def test__header_routing__invalid_version_format__error():
     main_app = HeaderRoutingFastAPI()
     main_app.add_header_versioned_routers(header_value=DEFAULT_API_VERSION)
-    with pytest.raises(ValueError, match=re.escape("header_value should be in `%Y-%m-%d` format")):
+    with pytest.raises(ValueError, match=re.escape("header_value should be in ISO 8601 format")):
         main_app.add_header_versioned_routers(APIRouter(), header_value="2022-01_01")
 
 
