@@ -1,6 +1,8 @@
+from contextlib import asynccontextmanager
 from contextvars import ContextVar
 
 import uvicorn
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from tests._resources.utils import BASIC_HEADERS
@@ -9,7 +11,15 @@ from tests._resources.versioned_app.v2022_01_02 import router as v2022_01_02_rou
 from tests._resources.versioned_app.webhooks import router as webhooks_router
 from verselect import HeaderRoutingFastAPI
 
-versioned_app = HeaderRoutingFastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # this cannot be covered, because it is not possible
+    # to run the lifespan scope during test runs
+    yield  # pragma: no cover
+
+
+versioned_app = HeaderRoutingFastAPI(lifespan=lifespan)
 versioned_app.add_header_versioned_routers(v2021_01_01_router, header_value="2021-01-01")
 versioned_app.add_header_versioned_routers(v2022_01_02_router, header_value="2022-02-02")
 versioned_app.add_unversioned_routers(webhooks_router)
