@@ -1,17 +1,16 @@
 import bisect
 from collections import OrderedDict
-from datetime import date, datetime
+from collections.abc import Sequence
+from datetime import date
 from functools import cached_property
 from logging import getLogger
-from typing import Any, Sequence
+from typing import Any
 
 from fastapi.routing import APIRouter
 from starlette.datastructures import URL
 from starlette.responses import RedirectResponse
 from starlette.routing import BaseRoute, Match
 from starlette.types import Receive, Scope, Send
-
-VERSION_HEADER_FORMAT = "%Y-%m-%d"
 
 logger = getLogger(__name__)
 
@@ -58,14 +57,14 @@ class RootHeaderAPIRouter(APIRouter):
         request_header_value: date,
     ) -> list[BaseRoute]:
         routes = []
-        request_version = request_header_value.strftime(VERSION_HEADER_FORMAT)
+        request_version = request_header_value.isoformat()
 
         if self.min_routes_version > request_header_value:
             # then the request version is older that the oldest route we have
             logger.info(
                 f"Request version {request_version} "
                 f"is older than the oldest "
-                f"version {self.min_routes_version.strftime(VERSION_HEADER_FORMAT)}",
+                f"version {self.min_routes_version.isoformat()} ",
             )
             return routes
         version_chosen = self.find_closest_date_but_not_new(request_header_value)
@@ -89,7 +88,7 @@ class RootHeaderAPIRouter(APIRouter):
         request_headers = dict(scope["headers"])
         header_value = request_headers.get(self.api_version_header_name.encode(), b"").decode()
         if header_value:
-            header_value = datetime.strptime(header_value, VERSION_HEADER_FORMAT).date()
+            header_value = date.fromisoformat(header_value)
 
         # if header_value is None, then it's an unversioned request and we need to use the unversioned routes
         # if there will be a value, we search for the most suitable version

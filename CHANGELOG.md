@@ -3,11 +3,20 @@
 All notable changes to this project will be documented in this file.
 Please follow [the Keep a Changelog standard](https://keepachangelog.com/en/1.0.0/).
 
+
+## [0.2.0] - 2024-01-15
+
+### Changed
+
+* Version header now parsed using `fromisoformat` for performance improvment
+
+
 ## [0.1.2] - 2024-02-12
 
 ### Added
 
 * added `lifespan` parameter to the `HeaderRoutingFastAPI` class to support FastAPI's `on_event` lifecycle events migration
+
 
 ## [0.1.1] - 2024-01-15
 
