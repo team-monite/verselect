@@ -1,5 +1,6 @@
 [tool.poetry]
-name = "verselect"
+name = "verselect-backup"
+packages = [{include="verselect"}]
 version = "0.2.0"
 description = ""
 authors = ["Bogdan Evstratenko <evstrat.bg@gmail.com>", "Stanislav Zmiev <zmievsa@gmail.com>"]
