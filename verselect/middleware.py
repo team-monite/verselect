@@ -22,6 +22,7 @@ def _get_api_version_dependency(api_version_header_name: str, version_example: s
                 api_version_header_name.replace("-", "_"),
                 inspect.Parameter.KEYWORD_ONLY,
                 annotation=Annotated[date, Header(examples=[version_example])],
+                default=version_example,
             ),
         ],
     )
