@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Sequence
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.applications import AppType
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.params import Depends as DependsType
@@ -12,6 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
 from starlette.routing import BaseRoute, Route
+from starlette.types import Lifespan
 
 from .middleware import HeaderVersioningMiddleware, _get_api_version_dependency
 from .routing import RootHeaderAPIRouter
@@ -39,6 +41,7 @@ class HeaderRoutingFastAPI(FastAPI):
         on_startup: Sequence[Callable[[], Any]] | None = None,
         on_shutdown: Sequence[Callable[[], Any]] | None = None,
         callbacks: List[BaseRoute] | None = None,
+        lifespan: Lifespan[AppType] | None = None,
         **kwargs: Any,
     ):
         if api_version_var is None:
@@ -55,6 +58,7 @@ class HeaderRoutingFastAPI(FastAPI):
             deprecated=deprecated,
             responses=responses,
             api_version_header_name=api_version_header_name,
+            lifespan=lifespan,
         )
         self.swaggers = {}
         router = APIRouter(routes=routes)
