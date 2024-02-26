@@ -8,7 +8,6 @@ Please follow [the Keep a Changelog standard](https://keepachangelog.com/en/1.0.
 ### Changed
 
 * Version header now parsed using `fromisoformat` for performance improvment
-* Temporarily renamed to `verselect-backup` for pypi access rights
 
 ### Added
 
