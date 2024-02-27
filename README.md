@@ -1,6 +1,6 @@
 # verselect
 
-FastAPI based framework to select an API version.
+Header-based routing for API versioning in FastAPI
 
 Battle-tested at Monite in production.
 
@@ -71,9 +71,6 @@ if __name__ == '__main__':
     uvicorn.run(mixed_hosts_app)
 ```
 
-By running the app, at http://localhost:8000/docs you will see a dashboard with the available versions.
-
+By running the app, at <http://localhost:8000/docs> you will see a dashboard with the available versions.
 
 More examples can be found in the `tests._resources` folder.
-
-
