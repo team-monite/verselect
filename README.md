@@ -2,7 +2,11 @@
 
 Header-based routing for API versioning in FastAPI
 
-Battle-tested at Monite in production.
+Battle-tested at Monite in production. 
+
+## Warning
+
+The up-to-date version of verselect is now a part of [Cadwyn](https://github.com/zmievsa/cadwyn). Using it instead is recommended.
 
 ## Explanation
 
